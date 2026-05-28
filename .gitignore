@@ -1,0 +1,7 @@
+#files
+db/
+minio/
+redis/
+
+#env
+.env
