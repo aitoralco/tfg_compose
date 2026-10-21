@@ -181,4 +181,4 @@ This setup is meant for local development and demos: all the ports are published
 
 ## License
 
-© 2026 Aitor Alonso Coloma. Licensed under [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](LICENSE): you can use, share and adapt it for non-commercial purposes, as long as you credit the author and link to the license. The trained models and the images used to train them are not covered by this license (they are not included).
+© 2026 Aitor Alonso Coloma. Licensed under the [MIT License](LICENSE). The trained models and the images used to train them are not covered by this license (they are not included).
