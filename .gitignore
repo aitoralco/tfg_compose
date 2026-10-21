@@ -1,7 +1,10 @@
-#files
+#local data folders (old bind mounts and local files)
 db/
 minio/
-redis/
+backend/
+#redis: only the config file is tracked (compose mounts it)
+redis/*
+!redis/redis.conf
 
 #env
 .env

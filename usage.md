@@ -1,43 +1,57 @@
-# Container Access — podman exec
+# Container access
 
-## PostgreSQL (most useful)
+Run these commands from this folder (where `compose.yaml` is). `docker compose exec` uses the service names, so they work whatever the container names are. The credentials are read from the container's own environment, so there is nothing to replace.
+
+## PostgreSQL
 
 ```bash
-# Open psql shell directly
-podman exec -it tfg_dockercompose-db-postgres-1 psql -U $DB_USER -d $DB_NAME
+# psql shell
+docker compose exec db-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 
-# Or get a bash shell first
-podman exec -it tfg_dockercompose-db-postgres-1 bash
+# plain shell
+docker compose exec db-postgres sh
 ```
 
-### Useful psql commands once inside
+Useful psql commands:
 
 ```sql
-\l                  -- list databases
-\c <db_name>        -- connect to a database
-\dt                 -- list tables
-\d <table>          -- describe a table
-\q                  -- quit
+\dt                         -- list tables
+\d videos                   -- describe a table
+SELECT * FROM video_status; -- video statuses created by the seed
+\q                          -- quit
 ```
 
 ## Redis
 
 ```bash
-podman exec -it tfg_dockercompose-cache-redis-1 redis-cli -a $REDIS_PASSWORD
+docker compose exec cache-redis sh -c 'redis-cli -a "$REDIS_PASSWORD"'
 ```
+
+Inside `redis-cli`, `KEYS rq:*` lists the RQ queues and jobs.
 
 ## MinIO
 
 ```bash
-podman exec -it tfg_dockercompose-filesystem-minio-1 bash
+docker compose exec filesystem-minio sh
 ```
 
----
+The web console (http://localhost:9001) is usually easier for browsing the bucket.
 
-## Find the exact container name
-
-If the name above doesn't match, list running containers:
+## Backend and worker
 
 ```bash
-podman ps
+docker compose exec backend-fastapi sh
+docker compose exec worker-rq sh
+
+# run the migrations and the seed again (they are idempotent)
+docker compose run --rm backend-migrate
+```
+
+## Logs and status
+
+```bash
+docker compose ps                     # services and their status
+docker compose logs -f backend-fastapi
+docker compose logs backend-migrate   # migration and seed output
+docker compose logs -f worker-rq      # video processing
 ```
