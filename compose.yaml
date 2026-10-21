@@ -1,3 +1,24 @@
+x-backend-env: &backend-env
+  POSTGRES_USER: ${DB_USER}
+  POSTGRES_PASSWORD: ${DB_PASSWORD}
+  POSTGRES_SERVER: db-postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_DB: ${DB_NAME}
+  REDIS_HOST: cache-redis
+  REDIS_PORT: 6379
+  REDIS_DB: 0
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  FILESYSTEM_URL: http://filesystem-minio:9000
+  FILESYSTEM_PUBLIC_URL: http://localhost:9000
+  FILESYSTEM_ID_KEY: ${MINIO_ROOT_USER}
+  FILESYSTEM_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+  FORCE_PATH_STYLE: "true"
+  REGION_NAME: us-east-1
+  BUCKET_NAME: ${BUCKET_NAME}
+  JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+  ADMIN_USERNAME: ${ADMIN_USERNAME}
+  ADMIN_EMAIL: ${ADMIN_EMAIL}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD}
 services:
   # --- FRONTEND ---
   frontend-angular:
@@ -18,26 +39,10 @@ services:
     container_name: backend-fastapi
     ports:
       - "8000:8000"
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_SERVER: db-postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: ${DB_NAME}
-      REDIS_HOST: cache-redis
-      REDIS_PORT: 6379
-      REDIS_DB: 0
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      FILESYSTEM_URL: http://filesystem-minio:9000
-      FILESYSTEM_ID_KEY: ${MINIO_ROOT_USER}
-      FILESYSTEM_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
-      FORCE_PATH_STYLE: "true"
-      REGION_NAME: us-east-1
-      BUCKET_NAME: ${BUCKET_NAME}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    environment: *backend-env
     depends_on:
-      db-postgres:
-        condition: service_healthy
+      backend-migrate:
+        condition: service_completed_successfully
       cache-redis:
         condition: service_healthy
       filesystem-minio:
@@ -75,6 +80,8 @@ services:
         condition: service_healthy
       filesystem-minio:
         condition: service_healthy
+      backend-migrate:
+        condition: service_completed_successfully
 
   # --- DATA CONTAINERS ---
   db-postgres:
@@ -92,6 +99,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  backend-migrate:
+    build:
+      context: ../tfg_backend
+      dockerfile: Dockerfile
+    container_name: backend-migrate
+    command: ["sh", "-c", "uv run alembic upgrade head && uv run python -m app.db.starter"]
+    environment: *backend-env
+    depends_on:
+      db-postgres:
+        condition: service_healthy
+    restart: "no"
 
   cache-redis:
     image: redis:latest

@@ -5,3 +5,6 @@ redis/
 
 #env
 .env
+
+#local backups
+*.tar.gz
